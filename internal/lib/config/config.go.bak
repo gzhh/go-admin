@@ -1,0 +1,102 @@
+package config
+
+import (
+	"fmt"
+	"go-admin/internal/lib/env"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
+)
+
+var Settings = &Config{}
+
+type Config struct {
+	AdminServer AdminServer `mapstructure:"admin-server"`
+	MySQL       MySQLConfig `mapstructure:"mysql"`
+	Redis Redis `mapstructure:"redis"`
+}
+
+type Redis struct {
+	GoAdmin RedisConfig `mapstructure:"go-admin"`
+}
+
+type RedisConfig struct {
+	Addr     string `mapstructure:"addr"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
+}
+
+type AdminServer struct {
+	Server ServerConfig `mapstructure:"server"`
+	Log    LogConfig    `mapstructure:"log"`
+}
+
+type ServerConfig struct {
+	GinMode      string        `mapstructure:"gin_mode"`
+	HttpPort     int           `mapstructure:"http_port"`
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+	JwtSecret    string        `mapstructure:"jwt_secret"`
+}
+
+type LogConfig struct {
+	LogSavePath   string `mapstructure:"log_save_path"`
+	LogSaveName   string `mapstructure:"log_save_name"`
+	LogFileExt    string `mapstructure:"log_file_ext"`
+}
+
+func Init() {
+	var rootDir string
+	currentPath, _ := os.Getwd()
+	rootDir = currentPath
+	configDir := filepath.Join(rootDir, "configs", env.Mode())
+
+	files, err := os.ReadDir(configDir)
+	if err != nil {
+		log.Fatalf("read config files name error: %v", err)
+	}
+
+	viperConfig := viper.New()
+	viperConfig.AddConfigPath(configDir)
+
+	for _, file := range files {
+		filePath := filepath.Join(configDir, file.Name())
+		ext := filepath.Ext(filePath)
+		if ext == ".yaml" {
+			fileNameWithExt := filepath.Base(filePath)
+			fileName := strings.TrimSuffix(fileNameWithExt, filepath.Ext(fileNameWithExt))
+			viperConfig.SetConfigName(fileName)
+			if err := viperConfig.MergeInConfig(); err != nil {
+				log.Fatalf("merge config file error: %v", err)
+			}
+		}
+	}
+
+	err = viperConfig.Unmarshal(Settings)
+	if err != nil {
+		panic(err)
+	}
+
+	// 一个 viper 实例只能监听一个文件的修改
+	// fmt.Println("Config file used for watch:", viperConfig.ConfigFileUsed())
+	viperConfig.WatchConfig()
+	viperConfig.OnConfigChange(func(e fsnotify.Event) {
+		// fmt.Println("Config file changed:", e.Name)
+		// fmt.Println(e.Op.String())
+		// fmt.Println(e.String())
+
+		// update Settings
+		err = viperConfig.Unmarshal(Settings)
+		if err != nil {
+			panic(fmt.Errorf("unmarshal settings failed, err: %v", err))
+		}
+		// fmt.Println("settings", Settings)
+	})
+
+	// fmt.Println("all_settings", viperConfig.AllSettings())
+}

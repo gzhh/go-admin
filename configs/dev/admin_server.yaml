@@ -1,0 +1,11 @@
+admin-server:
+  server:
+    gin_mode: "debug"
+    http_port: 8081
+    read_timeout: 600s
+    write_timeout: 600s
+    jwt_secret: "f29f6b2e9b8ffb5c8a241e687b4f98d3"
+  log:
+    log_save_path: "logs/"
+    log_save_name: "admin"
+    log_file_ext: "log"

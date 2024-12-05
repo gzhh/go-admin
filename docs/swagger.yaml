@@ -1,0 +1,151 @@
+definitions:
+  admin.UserListResponse:
+    properties:
+      list:
+        description: 数据列表
+        items:
+          $ref: '#/definitions/admin.UserResponse'
+        type: array
+      page_info:
+        allOf:
+        - $ref: '#/definitions/pagination.PageInfo'
+        description: 分页信息
+    type: object
+  admin.UserResponse:
+    properties:
+      create_time:
+        description: 创建时间
+        type: string
+      id:
+        description: ID
+        type: integer
+      is_delete:
+        description: 是否删除：0否 1是
+        type: integer
+      remark:
+        description: 备注
+        type: string
+      role_type:
+        description: 角色：0普通用户 1管理员
+        type: integer
+      status:
+        description: 角色：0停用 1启用
+        type: integer
+      token:
+        description: Token
+        type: string
+      username:
+        description: 用户名
+        type: string
+    type: object
+  handlers.resp:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  pagination.PageInfo:
+    properties:
+      page:
+        description: 页号
+        type: integer
+      page_size:
+        description: 每页大小
+        type: integer
+      total_number:
+        description: 数据总条数
+        type: integer
+      total_page:
+        description: 数据总页数
+        type: integer
+    type: object
+  validators.UserLogin:
+    properties:
+      code:
+        description: 第三方登录临时授权码code
+        type: string
+      login_type:
+        description: 注册类型：0-账号密码 1-钉钉
+        type: integer
+      password:
+        description: 密码
+        type: string
+      username:
+        description: 用户名
+        type: string
+    required:
+    - login_type
+    type: object
+info:
+  contact: {}
+paths:
+  /user:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bearer 用户令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 页号
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - description: 每页大小
+        in: query
+        maximum: 1000
+        minimum: 1
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.resp'
+            - properties:
+                data:
+                  $ref: '#/definitions/admin.UserListResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 用户-列表接口
+      tags:
+      - 用户
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: 返回结构中有token，则说明授权成功；若无token，则说明账号在审核。
+      parameters:
+      - description: 数据参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/validators.UserLogin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.resp'
+            - properties:
+                data:
+                  $ref: '#/definitions/admin.UserResponse'
+              type: object
+      summary: 用户-登录
+      tags:
+      - 用户
+swagger: "2.0"
