@@ -1,0 +1,14 @@
+services:
+  adminapp:
+    image: go-admin/adminapp
+    build:
+      context: .
+      dockerfile: build/docker/admin/Dockerfile
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "8081:8081"
+    extra_hosts:
+    # - "host.docker.internal:host-gateway" # default
+    - "dockerhost:host-gateway"

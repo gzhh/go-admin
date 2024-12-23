@@ -1,0 +1,7 @@
+mysql:
+  go-admin:
+    conn:
+      - "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai&timeout=10s&readTimeout=60s&writeTimeout=10s"
+    max_idle: 0
+    max_open: 10
+    max_lifetime: 600
